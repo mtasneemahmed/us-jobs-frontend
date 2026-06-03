@@ -9,28 +9,49 @@ const supabase = createClient(
 export const revalidate = 0;
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {
-  // 💡 FIX 1: Next.js latest version requires awaiting params
   const resolvedParams = await params;
   const jobId = resolvedParams.id;
   
-  // 💡 FIX 2: Removed parseInt. Supabase is smart enough to handle string IDs directly
   const { data: job } = await supabase.from('remote_jobs').select('*').eq('id', jobId).single();
   
   if (!job) return { title: 'Position Closed | Private Global Network' };
 
+  // 🚀 MASTER HACK: The Infinite Traffic OG Tags for Twitter
   return {
     title: `${job.job_title} at ${job.company_name} | Vetted Remote Network`,
-    description: `Official vetted listing for ${job.job_title} at ${job.company_name}. Fully remote position. Compensation: ${job.salary_range || 'Competitive Equity + Base'}. Top 1% talent only.`,
-    keywords: `${job.job_title}, remote ${job.job_title}, ${job.company_name} careers, high-frequency trading jobs, machine learning roles, AI engineers, top paying remote tech jobs`,
+    description: `Official vetted listing for ${job.job_title}. Fully remote position. Compensation: ${job.salary_range || 'Competitive Base'}.`,
+    keywords: `${job.job_title}, remote ${job.job_title}, ${job.company_name} careers, high-paying remote tech jobs`,
+    
+    openGraph: {
+      title: `${job.job_title} - ${job.company_name}`,
+      description: `Remote • ${job.salary_range || 'Competitive'} • Apply Now`,
+      url: `https://us-jobs-frontend.vercel.app/jobs/${jobId}`,
+      siteName: 'VettedTech Portal',
+      images: [
+        {
+          // یہ ایک پریمیم ڈارک ٹیک/کوڈنگ تھیم کی تصویر ہے جو پروفیشنل لگے گی
+          url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&h=630&auto=format&fit=crop',
+          width: 1200,
+          height: 630,
+          alt: `${job.job_title} Role`,
+        },
+      ],
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image', // 👈 یہ لائن ٹویٹر کو کہے گی کہ بڑا اور کلک ایبل تھمب نیل بناؤ
+      title: `Hiring: ${job.job_title} at ${job.company_name}`,
+      description: `💰 ${job.salary_range || 'Competitive Pay'} | 🌍 100% Remote`,
+      images: ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&h=630&auto=format&fit=crop'],
+    },
   };
 }
 
 export default async function JobDetail({ params }: any) {
-  // 💡 FIX 1: Next.js latest version requires awaiting params
   const resolvedParams = await params;
   const jobId = resolvedParams.id;
   
-  // 💡 FIX 2: Pass ID directly without breaking it
   const { data: job, error } = await supabase.from('remote_jobs').select('*').eq('id', jobId).single();
   
   if (error || !job) {
@@ -42,8 +63,6 @@ export default async function JobDetail({ params }: any) {
           <a href="/" className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-bold transition-all border border-white/5">
             Return to Dashboard
           </a>
-          
-          {/* 🕵️‍♂️ Secret Debugger: Only visible at the very bottom to tell us EXACTLY what went wrong */}
           <p className="text-red-500/30 text-[11px] mt-8 font-mono">
             DEBUG: ID attempted = {jobId} | Error = {error?.message || 'Null Data'}
           </p>
