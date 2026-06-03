@@ -1,8 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
-// 1. Direct Supabase Connection
 const supabase = createClient(
   "https://fsuibtsmyaefvxhzakfa.supabase.co",
   "sb_publishable_FU4uOIi0XXnsafmLvKf9bg__5Qf7Niz"
@@ -10,9 +8,10 @@ const supabase = createClient(
 
 export const revalidate = 0;
 
-// 2. The Google Algorithm Hacker (Dynamic Metadata)
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const { data: job } = await supabase.from('remote_jobs').select('*').eq('id', params.id).single();
+  // 💡 The Fix: Converting String ID to Number ID
+  const jobId = parseInt(params.id, 10);
+  const { data: job } = await supabase.from('remote_jobs').select('*').eq('id', jobId).single();
   
   if (!job) return { title: 'Position Closed | Private Global Network' };
 
@@ -24,20 +23,32 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function JobDetail({ params }: { params: { id: string } }) {
-  // Fetch exact job details
-  const { data: job, error } = await supabase.from('remote_jobs').select('*').eq('id', params.id).single();
+  // 💡 The Fix: Converting String ID to Number ID
+  const jobId = parseInt(params.id, 10);
+  const { data: job, error } = await supabase.from('remote_jobs').select('*').eq('id', jobId).single();
   
-  if (error || !job) notFound();
+  // 🛡️ Professional Error Handling instead of silent 404
+  if (error || !job) {
+    return (
+      <main className="min-h-screen bg-[#050505] flex items-center justify-center p-6 text-center">
+        <div className="bg-white/[0.02] p-10 rounded-3xl border border-red-500/20 shadow-2xl backdrop-blur-md max-w-lg">
+          <h1 className="text-3xl font-bold text-red-400 mb-4">Opportunity Unavailable</h1>
+          <p className="text-slate-400 mb-6">This exclusive position may have been filled, removed, or the link is incorrect.</p>
+          <a href="/" className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-bold transition-all border border-white/5">
+            Return to Dashboard
+          </a>
+        </div>
+      </main>
+    );
+  }
 
-  // 3. THE BILLION-DOLLAR SECRET: Google Rich Results (JSON-LD Schema)
-  // This invisible script tells Google to rank this exact job at the top of search results.
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     'title': job.job_title,
     'description': `We are looking for a highly skilled ${job.job_title} to join ${job.company_name} in a fully remote capacity.`,
     'datePosted': job.scraped_at,
-    'validThrough': new Date(new Date(job.scraped_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Valid for 30 days
+    'validThrough': new Date(new Date(job.scraped_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     'employmentType': 'FULL_TIME',
     'hiringOrganization': {
       '@type': 'Organization',
@@ -61,10 +72,8 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   return (
     <main className="min-h-screen bg-[#050505] text-slate-200 p-6 md:p-12 font-sans flex items-center justify-center relative overflow-hidden">
       
-      {/* Invisible Schema Markup for Google Bots */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* Luxury Ambient Background */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/10 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="max-w-4xl w-full relative z-10 bg-white/[0.01] p-8 md:p-14 rounded-3xl border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
