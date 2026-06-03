@@ -8,9 +8,12 @@ const supabase = createClient(
 
 export const revalidate = 0;
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  // 💡 The Fix: Converting String ID to Number ID
-  const jobId = parseInt(params.id, 10);
+export async function generateMetadata({ params }: any): Promise<Metadata> {
+  // 💡 FIX 1: Next.js latest version requires awaiting params
+  const resolvedParams = await params;
+  const jobId = resolvedParams.id;
+  
+  // 💡 FIX 2: Removed parseInt. Supabase is smart enough to handle string IDs directly
   const { data: job } = await supabase.from('remote_jobs').select('*').eq('id', jobId).single();
   
   if (!job) return { title: 'Position Closed | Private Global Network' };
@@ -22,12 +25,14 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function JobDetail({ params }: { params: { id: string } }) {
-  // 💡 The Fix: Converting String ID to Number ID
-  const jobId = parseInt(params.id, 10);
+export default async function JobDetail({ params }: any) {
+  // 💡 FIX 1: Next.js latest version requires awaiting params
+  const resolvedParams = await params;
+  const jobId = resolvedParams.id;
+  
+  // 💡 FIX 2: Pass ID directly without breaking it
   const { data: job, error } = await supabase.from('remote_jobs').select('*').eq('id', jobId).single();
   
-  // 🛡️ Professional Error Handling instead of silent 404
   if (error || !job) {
     return (
       <main className="min-h-screen bg-[#050505] flex items-center justify-center p-6 text-center">
@@ -37,6 +42,11 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
           <a href="/" className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-bold transition-all border border-white/5">
             Return to Dashboard
           </a>
+          
+          {/* 🕵️‍♂️ Secret Debugger: Only visible at the very bottom to tell us EXACTLY what went wrong */}
+          <p className="text-red-500/30 text-[11px] mt-8 font-mono">
+            DEBUG: ID attempted = {jobId} | Error = {error?.message || 'Null Data'}
+          </p>
         </div>
       </main>
     );
@@ -71,23 +81,18 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
 
   return (
     <main className="min-h-screen bg-[#050505] text-slate-200 p-6 md:p-12 font-sans flex items-center justify-center relative overflow-hidden">
-      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-emerald-500/10 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="max-w-4xl w-full relative z-10 bg-white/[0.01] p-8 md:p-14 rounded-3xl border border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-        
         <header className="mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-[0.2em] mb-8 shadow-inner">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             Verified Opportunity
           </div>
-
           <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-400 tracking-tight mb-6 leading-tight">
             {job.job_title}
           </h1>
-          
           <div className="flex flex-wrap items-center gap-4 text-lg border-b border-white/5 pb-10">
             <p className="text-emerald-400 font-bold uppercase tracking-wider">{job.company_name}</p>
             <span className="text-slate-700 hidden sm:block">•</span>
@@ -106,12 +111,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
         </div>
 
         <div className="flex flex-col sm:flex-row gap-5">
-          <a 
-            href={job.job_link} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex-1 bg-white text-black hover:bg-emerald-400 px-8 py-5 rounded-xl font-extrabold transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(52,211,153,0.3)] text-center text-lg tracking-wide group"
-          >
+          <a href={job.job_link} target="_blank" rel="noopener noreferrer" className="flex-1 bg-white text-black hover:bg-emerald-400 px-8 py-5 rounded-xl font-extrabold transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_40px_rgba(52,211,153,0.3)] text-center text-lg tracking-wide group">
             Apply Confidentially
             <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
           </a>
@@ -119,7 +119,6 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
             Return to Dashboard
           </a>
         </div>
-
       </div>
     </main>
   );
