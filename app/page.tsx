@@ -89,7 +89,7 @@ export default async function Home() {
                 
                 {/* Luxury CTA Button */}
                 <a 
-                  href={job.job_link} 
+                  href={`/jobs/${job.id}`}
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="bg-white text-black hover:bg-emerald-400 hover:text-black px-8 py-3.5 rounded-lg font-bold transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(52,211,153,0.4)] text-center whitespace-nowrap text-sm tracking-wide"
